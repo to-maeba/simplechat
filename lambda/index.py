@@ -4,7 +4,7 @@ import os
 import boto3
 import re  # 正規表現モジュールをインポート
 from botocore.exceptions import ClientError
-
+import requests
 
 # Lambda コンテキストからリージョンを抽出する関数
 def extract_region_from_arn(arn):
@@ -18,7 +18,8 @@ def extract_region_from_arn(arn):
 bedrock_client = None
 
 # モデルID
-MODEL_ID = os.environ.get("MODEL_ID", "us.amazon.nova-lite-v1:0")
+# MODEL_ID = os.environ.get("MODEL_ID", "us.amazon.nova-lite-v1:0")
+ip = "https://a009-34-16-170-234.ngrok-free.app"
 
 def lambda_handler(event, context):
     try:
@@ -69,6 +70,8 @@ def lambda_handler(event, context):
                     "content": [{"text": msg["content"]}]
                 })
         
+        url = "https://{}".format(ip)
+        
         # invoke_model用のリクエストペイロード
         request_payload = {
             "messages": bedrock_messages,
@@ -83,11 +86,16 @@ def lambda_handler(event, context):
         print("Calling Bedrock invoke_model API with payload:", json.dumps(request_payload))
         
         # invoke_model APIを呼び出し
-        response = bedrock_client.invoke_model(
+        response = requests.post(
+          url,
+          data=json.dumps(request_payload), 
+          headers={'content-type': 'application/json; charset=UTF-8'}
+        )
+        """response = bedrock_client.invoke_model(
             modelId=MODEL_ID,
             body=json.dumps(request_payload),
             contentType="application/json"
-        )
+        )"""
         
         # レスポンスを解析
         response_body = json.loads(response['body'].read())
